@@ -1,9 +1,13 @@
 package id.com.codescannersamplejava;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
@@ -40,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         // Show decoded result using toast
-                        Toast.makeText(MainActivity.this, result.getText(), Toast.LENGTH_SHORT).show();
+                        scanMalware(result);
                     }
                 });
             }
@@ -54,6 +58,34 @@ public class MainActivity extends AppCompatActivity {
                 startPreviewCamera();
             }
         });
+    }
+
+    // Method for do result after scanning
+    private void scanMalware(Result result) {
+        if(MalwareDetector.compileIsURLSafe(result.getText())){
+            // if result Malware
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Url yang dituju merupakan malware, apakah yakin mau lanjut?")
+                    .setTitle("Malware Detected!")
+                    .setPositiveButton("Ya", (dialog, which) -> resultAction(result.getText()))
+                    .setNegativeButton("Kembali", (dialog, which) -> dialog.dismiss());
+            builder.create().show();
+        } else {
+            // if result not malware
+            resultAction(result.getText());
+        }
+    }
+
+    private void resultAction(String result){
+        // detect if url redirect to browser, if not show using toast
+        if(result.contains("http") || result.contains("www")){
+            String url = result;
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            startActivity(i);
+        } else {
+            Toast.makeText(this, "result is "+result, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @AfterPermissionGranted(RC_CAMERA)
